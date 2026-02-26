@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>A股短线监控演示</title>
+<style>
+  body { font-family: monospace; background: #f4f6f8; color: #222; padding: 20px; }
+  h2 { font-weight: normal; margin-bottom: 10px; }
+  .panel { margin-bottom: 12px; }
+  input { padding: 6px; font-family: monospace; width: 140px; }
+  button { padding: 6px 10px; font-family: monospace; cursor: pointer; }
+  table { border-collapse: collapse; width: 100%; font-size: 13px; }
+  th, td { padding: 6px 10px; text-align: left; }
+  th { background: #e9eef3; }
+  tr:nth-child(even) { background: #f1f4f8; }
+  .up { color: #c53030; }
+  .down { color: #2f855a; }
+  .remove { cursor: pointer; color: #888; }
+  .remove:hover { color: #c53030; }
+</style>
+</head>
+<body>
+
+<h2>A股短线行情演示</h2>
+
+<div class="panel">
+  <input id="symbolInput" placeholder="输入股票代码，如 600519">
+  <button onclick="addStock()">添加</button>
+</div>
+
+<table>
+  <thead>
+    <tr>
+      <th>代码</th>
+      <th>当前价</th>
+      <th>涨跌幅</th>
+      <th>成交量</th>
+      <th>买一</th>
+      <th>卖一</th>
+      <th>内盘</th>
+      <th>外盘</th>
+      <th>逐笔示例</th>
+      <th></th>
+    </tr>
+  </thead>
+  <tbody id="data"></tbody>
+</table>
+
+<script>
+// 股票列表，LocalStorage 保存
+let stocks = JSON.parse(localStorage.getItem("stocks_cn")) || ["600519","000001"];
+
+function saveStocks() {
+  localStorage.setItem("stocks_cn", JSON.stringify(stocks));
+}
+
+function addStock() {
+  const input = document.getElementById("symbolInput");
+  const symbol = input.value.trim();
+  if (!symbol || stocks.includes(symbol)) return;
+  stocks.push(symbol);
+  saveStocks();
+  input.value = "";
+  renderTable();
+}
+
+function removeStock(symbol) {
+  stocks = stocks.filter(s => s !== symbol);
+  saveStocks();
+  renderTable();
+}
+
+// 模拟获取行情（占位演示，可替换成真实API）
+function getMockData(symbol) {
+  const price = (Math.random()*100 + 10).toFixed(2);
+  const change = (Math.random()*2-1).toFixed(2);
+  const volume = Math.floor(Math.random()*10000);
+  const bid = (parseFloat(price)-0.05).toFixed(2);
+  const ask = (parseFloat(price)+0.05).toFixed(2);
+  const inVolume = Math.floor(Math.random()*5000);
+  const outVolume = Math.floor(Math.random()*5000);
+  const tick = `${price} (${Math.random()>0.5?'+':'-'})`;
+  return {symbol, price, change, volume, bid, ask, inVolume, outVolume, tick};
+}
+
+// 渲染表格
+function renderTable() {
+  const tbody = document.getElementById("data");
+  tbody.innerHTML = "";
+
+  stocks.forEach(sym => {
+    const stock = getMockData(sym);
+    const changeClass = stock.change >= 0 ? "up" : "down";
+
+    tbody.innerHTML += `
+      <tr>
+        <td>${stock.symbol}</td>
+        <td>${stock.price}</td>
+        <td class="${changeClass}">${stock.change}%</td>
+        <td>${stock.volume}</td>
+        <td>${stock.bid}</td>
+        <td>${stock.ask}</td>
+        <td>${stock.inVolume}</td>
+        <td>${stock.outVolume}</td>
+        <td>${stock.tick}</td>
+        <td class="remove" onclick="removeStock('${stock.symbol}')">✕</td>
+      </tr>
+    `;
+  });
+}
+
+// 秒级刷新
+renderTable();
+setInterval(renderTable, 1000);
+</script>
+
+</body>
+</html>
